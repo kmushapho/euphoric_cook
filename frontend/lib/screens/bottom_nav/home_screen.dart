@@ -213,7 +213,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: PantrySelector(isFood: mode.isFood, accentColor: accent),
         );
       case 'All Day Meals':
-        return const SliverToBoxAdapter(child: AllDayMealsMenu());
+        return SliverToBoxAdapter(child: AllDayMealsMenu());
       case 'Cuisines by region':
         return const SliverToBoxAdapter(child: CountriesContent());
       case 'Recently viewed':
