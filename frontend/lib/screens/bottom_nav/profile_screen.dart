@@ -26,8 +26,6 @@ class ProfileScreen extends StatelessWidget {
         children: [
           _UserHeader(user: user, mode: mode),
           const SizedBox(height: 20),
-          _PremiumCard(accent: mode.accentColor),
-          const SizedBox(height: 30),
           _PreferencesSection(user: user, mode: mode),
           const SizedBox(height: 20),
           _TagsSection(user: user),
@@ -103,50 +101,6 @@ class _UserHeader extends StatelessWidget {
           ],
         ),
       ],
-    );
-  }
-}
-
-class _PremiumCard extends StatelessWidget {
-  final Color accent;
-  const _PremiumCard({required this.accent});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: accent,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          Text(
-            "Euphoric Cook Premium",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(height: 6),
-          Text(
-            "Unlimited meal plans, no ads, advanced features & more",
-            style: TextStyle(color: Colors.white70),
-          ),
-          SizedBox(height: 14),
-          Center(
-            child: Text(
-              "Upgrade Now",
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          )
-        ],
-      ),
     );
   }
 }
