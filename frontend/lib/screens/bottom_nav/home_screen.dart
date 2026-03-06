@@ -35,10 +35,13 @@ class _HomeScreenState extends State<HomeScreen> {
               slivers: [
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
                       children: [
+                        Expanded(
+                          child: _buildFoodDrinkToggle(mode),
+                        ),
+
                         IconButton(
                           icon: Icon(
                             mode.isDark
@@ -50,12 +53,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ],
                     ),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: _buildFoodDrinkToggle(mode),
                   ),
                 ),
                 SliverToBoxAdapter(
