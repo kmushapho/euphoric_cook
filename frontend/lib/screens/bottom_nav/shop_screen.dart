@@ -17,6 +17,7 @@ class _ShopScreenState extends State<ShopScreen>
   late TabController _tabController;
   final ShoppingData data = ShoppingData.instance;
 
+  // Multi-select for manual lists
   final Set<int> selectedManualIndexes = {};
 
   @override
@@ -24,7 +25,7 @@ class _ShopScreenState extends State<ShopScreen>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() {
-      setState(() {}); // refresh FAB visibility
+      setState(() {}); // refresh FAB visibility on tab change
     });
   }
 
@@ -59,22 +60,23 @@ class _ShopScreenState extends State<ShopScreen>
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
           ElevatedButton(
-              onPressed: () {
-                var name = controller.text.trim();
-                if (name.isEmpty) {
-                  name = "My List ${data.manualLists.length + 1}";
-                }
-                data.manualLists.add(
-                  ManualList(
-                    name: name,
-                    items: [],
-                    createdAt: DateTime.now(),
-                  ),
-                );
-                _refresh();
-                Navigator.pop(context);
-              },
-              child: const Text("Add")),
+            onPressed: () {
+              var name = controller.text.trim();
+              if (name.isEmpty) {
+                name = "My List ${data.manualLists.length + 1}";
+              }
+              data.manualLists.add(
+                ManualList(
+                  name: name,
+                  items: [],
+                  createdAt: DateTime.now(),
+                ),
+              );
+              _refresh();
+              Navigator.pop(context);
+            },
+            child: const Text("Add"),
+          ),
         ],
       ),
     );
@@ -121,6 +123,7 @@ class _ShopScreenState extends State<ShopScreen>
           ],
         ),
       ),
+      // FAB always visible for manual lists
       floatingActionButton: _tabController.index == 1
           ? FloatingActionButton(
         onPressed: _addNewManualList,
@@ -136,10 +139,10 @@ class _ShopScreenState extends State<ShopScreen>
     return ListView(
       padding: const EdgeInsets.all(12),
       children: [
-        _smartListTile(data.drinkList, Icons.local_drink, Colors.blueAccent),
-        _smartListTile(data.foodList, Icons.fastfood, Colors.green),
-        _smartListTile(data.foodDrinkList, Icons.restaurant_menu, Colors.purple),
-        _smartListTile(data.mealPlanner, Icons.calendar_today, Colors.orange),
+        _smartListTile(data.drinkList, Icons.local_drink, AppColors.vibrantBlue),
+        _smartListTile(data.foodList, Icons.fastfood, AppColors.vibrantGreen),
+        _smartListTile(data.foodDrinkList, Icons.restaurant_menu, AppColors.vibrantOrange),
+        _smartListTile(data.mealPlanner, Icons.calendar_today, Colors.purple),
         const SizedBox(height: 80),
       ],
     );
@@ -214,16 +217,7 @@ class _ShopScreenState extends State<ShopScreen>
                 title: Text(list.name, style: const TextStyle(fontWeight: FontWeight.w600)),
                 subtitle: Text(list.subtitle,
                     style: TextStyle(color: Colors.grey[600], fontSize: 12)),
-                trailing: selected
-                    ? IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () {
-                    data.manualLists.removeAt(index);
-                    selectedManualIndexes.remove(index);
-                    _refresh();
-                  },
-                )
-                    : const Icon(Icons.chevron_right),
+                trailing: const Icon(Icons.chevron_right),
                 onTap: selected
                     ? () {
                   setState(() {
@@ -256,7 +250,7 @@ class _ShopScreenState extends State<ShopScreen>
             );
           },
         ),
-        // Floating delete button for multi-select
+        // Only one floating delete button for multi-select
         if (selectedManualIndexes.isNotEmpty)
           Positioned(
             top: 16,
