@@ -15,13 +15,17 @@ class ShopScreen extends StatefulWidget {
 class _ShopScreenState extends State<ShopScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-
   final ShoppingData data = ShoppingData.instance;
+
+  final Set<int> selectedManualIndexes = {};
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      setState(() {}); // refresh FAB visibility
+    });
   }
 
   @override
@@ -31,6 +35,50 @@ class _ShopScreenState extends State<ShopScreen>
   }
 
   void _refresh() => setState(() {});
+
+  void _deleteSelectedManualLists() {
+    final indexes = selectedManualIndexes.toList()..sort((a, b) => b.compareTo(a));
+    for (var index in indexes) {
+      data.manualLists.removeAt(index);
+    }
+    selectedManualIndexes.clear();
+    _refresh();
+  }
+
+  void _addNewManualList() {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("New Manual List"),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(hintText: "List Name"),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+          ElevatedButton(
+              onPressed: () {
+                var name = controller.text.trim();
+                if (name.isEmpty) {
+                  name = "My List ${data.manualLists.length + 1}";
+                }
+                data.manualLists.add(
+                  ManualList(
+                    name: name,
+                    items: [],
+                    createdAt: DateTime.now(),
+                  ),
+                );
+                _refresh();
+                Navigator.pop(context);
+              },
+              child: const Text("Add")),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,19 +92,17 @@ class _ShopScreenState extends State<ShopScreen>
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Text(
-                "Shopping List",
+                "Shopping Lists",
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color:
-                  isDark ? AppColors.lightText : AppColors.darkText,
+                  color: isDark ? AppColors.lightText : AppColors.darkText,
                 ),
               ),
             ),
             TabBar(
               controller: _tabController,
               labelColor: AppColors.vibrantOrange,
-              unselectedLabelColor:
-              isDark ? Colors.white70 : Colors.black54,
+              unselectedLabelColor: isDark ? Colors.white70 : Colors.black54,
               indicatorColor: AppColors.vibrantOrange,
               tabs: const [
                 Tab(text: "Smart Lists"),
@@ -75,88 +121,45 @@ class _ShopScreenState extends State<ShopScreen>
           ],
         ),
       ),
+      floatingActionButton: _tabController.index == 1
+          ? FloatingActionButton(
+        onPressed: _addNewManualList,
+        backgroundColor: AppColors.vibrantOrange,
+        child: const Icon(Icons.add),
+      )
+          : null,
     );
   }
 
   // ---------------- SMART LISTS ----------------
-
   Widget _buildSmartListsView() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return ListView(
       padding: const EdgeInsets.all(12),
       children: [
-        _smartListTile(data.drinkList),
-        _smartListTile(data.foodList),
-        _smartListTile(data.foodDrinkList),
-        _smartListTile(data.mealPlanner),
-
-        const SizedBox(height: 24),
-
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Text(
-            "By Recipe",
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white : Colors.black,
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 12),
-
-        if (data.recipeLists.isEmpty)
-          _emptyRecipeCard()
-        else
-          ...data.recipeLists.values.map(_smartListTile),
-
+        _smartListTile(data.drinkList, Icons.local_drink, Colors.blueAccent),
+        _smartListTile(data.foodList, Icons.fastfood, Colors.green),
+        _smartListTile(data.foodDrinkList, Icons.restaurant_menu, Colors.purple),
+        _smartListTile(data.mealPlanner, Icons.calendar_today, Colors.orange),
         const SizedBox(height: 80),
       ],
     );
   }
 
-  Widget _emptyRecipeCard() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 1,
-      color: isDark ? Colors.grey[850] : Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            Icon(
-              Icons.menu_book_rounded,
-              size: 64,
-              color: AppColors.vibrantOrange.withOpacity(0.7),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              "This section is empty",
-              style: TextStyle(fontSize: 16, color: Colors.grey),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _smartListTile(SmartList list) {
+  Widget _smartListTile(SmartList list, IconData icon, Color color) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 1,
+      elevation: 4,
+      color: Theme.of(context).cardColor,
       child: ListTile(
-        contentPadding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
-        leading: const Icon(Icons.lightbulb_outline,
-            color: AppColors.vibrantOrange, size: 32),
-        title: Text(list.name,
-            style: const TextStyle(fontWeight: FontWeight.w600)),
+        contentPadding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+        leading: CircleAvatar(
+          backgroundColor: color.withOpacity(0.2),
+          child: Icon(icon, color: color),
+        ),
+        title: Text(list.name, style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle: Text(list.subtitle,
-            style: TextStyle(color: Colors.grey[600])),
+            style: TextStyle(color: Colors.grey[600], fontSize: 12)),
         trailing: const Icon(Icons.chevron_right_rounded),
         onTap: () async {
           await Navigator.push(
@@ -170,55 +173,102 @@ class _ShopScreenState extends State<ShopScreen>
               ),
             ),
           );
-          setState(() {});
+          _refresh();
         },
       ),
     );
   }
 
   // ---------------- MANUAL LISTS ----------------
-
   Widget _buildManualListsView() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     if (data.manualLists.isEmpty) {
       return Center(
         child: Text(
-          "No manual lists",
+          "No manual lists yet",
           style: TextStyle(
-              color: isDark ? Colors.white70 : Colors.black54),
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white70
+                : Colors.black54,
+          ),
         ),
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(12),
-      itemCount: data.manualLists.length,
-      itemBuilder: (context, index) {
-        final list = data.manualLists[index];
-        return Card(
-          shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: ListTile(
-            title: Text(list.name),
-            subtitle: Text(list.subtitle),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ListDetailScreen(
-                    title: list.name,
-                    items: list.items,
-                    onItemsChanged: _refresh,
-                  ),
-                ),
-              );
-              setState(() {});
-            },
+    return Stack(
+      children: [
+        ListView.builder(
+          padding: const EdgeInsets.all(12),
+          itemCount: data.manualLists.length,
+          itemBuilder: (context, index) {
+            final list = data.manualLists[index];
+            final selected = selectedManualIndexes.contains(index);
+
+            return Card(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              elevation: selected ? 6 : 3,
+              shadowColor: selected ? Colors.redAccent.withOpacity(0.3) : Colors.black12,
+              color: selected
+                  ? AppColors.vibrantOrange.withOpacity(0.2)
+                  : Theme.of(context).cardColor,
+              child: ListTile(
+                title: Text(list.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: Text(list.subtitle,
+                    style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                trailing: selected
+                    ? IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () {
+                    data.manualLists.removeAt(index);
+                    selectedManualIndexes.remove(index);
+                    _refresh();
+                  },
+                )
+                    : const Icon(Icons.chevron_right),
+                onTap: selected
+                    ? () {
+                  setState(() {
+                    selectedManualIndexes.remove(index);
+                  });
+                }
+                    : () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ListDetailScreen(
+                        title: list.name,
+                        items: list.items,
+                        onItemsChanged: _refresh,
+                      ),
+                    ),
+                  );
+                  _refresh();
+                },
+                onLongPress: () {
+                  setState(() {
+                    if (selectedManualIndexes.contains(index)) {
+                      selectedManualIndexes.remove(index);
+                    } else {
+                      selectedManualIndexes.add(index);
+                    }
+                  });
+                },
+              ),
+            );
+          },
+        ),
+        // Floating delete button for multi-select
+        if (selectedManualIndexes.isNotEmpty)
+          Positioned(
+            top: 16,
+            right: 16,
+            child: FloatingActionButton(
+              mini: true,
+              backgroundColor: Colors.red,
+              onPressed: _deleteSelectedManualLists,
+              child: const Icon(Icons.delete),
+            ),
           ),
-        );
-      },
+      ],
     );
   }
 }
